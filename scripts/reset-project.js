@@ -59,7 +59,28 @@ const moveDirectories = async (userInput) => {
       if (fs.existsSync(oldDirPath)) {
         if (userInput === "y") {
           const newDirPath = path.join(root, exampleDir, dir);
-          await fs.promises.rename(oldDirPath, newDirPath);
+          if (process.platform === "win32") {
+            const { execFile } = require("child_process");
+            const { promisify } = require("util");
+            const execFileAsync = promisify(execFile);
+          
+            await execFileAsync("cmd.exe", [
+              "/c",
+              "move",
+              oldDirPath,
+              newDirPath,
+            ]);
+          } else {
+            await fs.promises.cp(oldDirPath, newDirPath, {
+              recursive: true,
+            });
+            await fs.promises.rm(oldDirPath, {
+              recursive: true,
+              force: true,
+            });
+            
+          }
+          
           console.log(`➡️ /${dir} moved to /${exampleDir}/${dir}.`);
         } else {
           await fs.promises.rm(oldDirPath, { recursive: true, force: true });
